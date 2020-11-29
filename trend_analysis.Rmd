@@ -1,0 +1,230 @@
+---
+title: "Number of Products in the basked vs Customer Journey"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(dplyr) 
+library(flextable)
+library(knitr)
+library("ggpubr")
+opts_knit$set(global.par = TRUE)
+```
+
+## 
+
+
+TREND ANALYSIS
+1) Mira si la media y la mediana divergen significativamente para ver si los datos son normales. Si media está muy lejos de la mediana, no sigue una distribucion normal
+2) Skew ?
+2.2) Need to transform the variable ? cuidado con la interpretacion
+3) Chequea normalidad con Saphiro-Walk test, junto con histogramas, density plots, normal Q-Q plotscan
+4) Runea el pearson correlation test, para ver si existe una linear relationship (asume normal data)
+   Si los datos no son normales, entonces usa Spearman Rank Order correlation, que evalua una monotonic relationship between two continuous or orifinal variables
+5) Linear regression
+6) plot four basic diagnistic plots
+
+DIFFERENCES BETWEEN GROUPS (2 groups)
+1) Saphiro wilk to test for normality
+1.1) t-test
+2) Unpaired test. Are the means of the two groups the same?  Paired test if data is dependenant p33 assigment 1
+3) wilcox signed-rank test. Medians of both groups are the same
+
+
+##STRUCTURE TO FOLLOW:
+
+1) Introduction: why, research question, tested hypothesis
+2) Methods: when, where and how was the study done
+3) Results: what did the study find
+4) What does the answer imply and how does it fit with other researchers
+
+## R Markdown
+
+
+## Introduction: 
+
+In the online marketing analytics field, we are interested in getting more information about how does the user interact with different marketing channels and how does he interact with the website. 
+Marketing channels are for example: Facebook, Google Search, Instagram...
+
+A user is an individual who might potentially be or is already a customer of our e-commerce. 
+Before the user buys in our website he or she follows a diverse combination of steps. Some users might search for the product they want to buy in the search engine and either click on the organic search results or click in the advertisements. Other users are just looking for information about the product but do not have any intention to buy. 
+Independently of their intention, a user interacts with a set of channels. This set of channels is called the customer journey. An example would be a user that has been reading our magazine, then has seen a display ad in facebook and then has searched in the search engine for the product they want to buy and clicked on a search ad. In this example the customer journey would be [Magazine, Facebook, Paid Search] and the length of the customer journey is 3. Another word used for the length of the customer journey, is the chain length.
+As well users might add products to their basked throughout the customer journey. This is referred as well as "cart additions".
+
+The main research question in this study is to see if there exists a relationship between the length of the customer journey and the number of products added in the basket.
+The first hypothesis would be that short customer journeys indicate that the user is sure he wants to buy and might add more products on average.
+However this is not clear since we could interpret as well that short customer journeys could mean the user clicked on the wrong advertisement and he had no intention at all of buying or not even caring about the content of the ad.
+
+## Methodology:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE }
+```
+
+```{r echo=FALSE }
+df <-read.table("/home/rangelrey/gitrepos/r-course/final_project/data/data1.csv", header=TRUE,     sep=",")
+```
+The data used in this study is based on a multinational european fast-moving consumer goods dataset. For privacy reasons the data is completely anonimized and only 31k rows of data will be used in this study. 
+
+Each row represents a differen customer/user. Cart additions is the number of products added into the basked in the e-commerce website and the chain length is the number of channels the user has visited.
+```{r echo=FALSE}
+flextable(head(df, 4))
+```
+
+The average amount of cart additions is 0.49 and the median is 0. In fact, as can be seen in Figure 1, the distribution is very skewed to the right. Most of the users haven't made a cart addition. We can say with security that this data does not follow a normal distribution
+
+```{r echo=FALSE, include=FALSE }
+mean(df$cart_additions)
+median(df$cart_additions)
+sd(df$cart_additions)
+```
+
+```{r echo=FALSE }
+hist(df$cart_additions, xlab="Cart additions", main="Cart additions distribution", col="blue", sub="Figure 1",breaks=100)
+```
+Figure 1 shows the distribution of the cart additions. The majority of the cart additions are 0. The distribution is positively skewed.
+
+```{r echo=FALSE }
+qqnorm(df$cart_additions, sub="Figure 2")
+```
+In Figure 2, we can observe that there is not a straight line, meaning the data is not approximately normal. 
+In the x-axis we plot the theoretical quantiles (average = 0, standard deviation = 1) and on the y-axis we plot the ordered values for the cart additions.
+```{r echo=FALSE, include=FALSE }
+mean(df$chain_length)
+median(df$chain_length)
+sd(df$chain_length)
+```
+For the chain length data, users interact with 1.56 channels on average and the median is 1. As can be seen in figure 2, again the data is very skewed to the right, with most of the customer journeys being just 1 touchpoint.
+```{r echo=FALSE }
+ggdensity(df$chain_length,main ="Density plot of the chain length -(Figure 3)",xlab ="Number of chanels in the customer journey")
+```
+Figure 2 shows the distribution of the length of the customer journeys. As well having a positively skewed distribution. Far away from a normal one.
+
+```{r echo=FALSE }
+qqnorm(df$chain_length, sub="Figure 4")
+```
+Figure 4 shows us a Q-Q plot, which demonstrates the data is not normally distributed.
+
+Another possibility to test whether the data is normally distributed or not is with the Saphiro-Wilk test. The null hypothesis states that the distribution of the data is not significantly different from a normal distribution. However the dataset is too large and I will focus on visualizations
+
+Due to non-normal data, in order to examine the relationship between both variables, we cannot simply use the pearson-correlation test which is basedon the normality assumption. We will then go for the Spearman Rank-Order correlation test (the non-parametric approach) which tests whether a monotonic relationship between two continuous variables exists. The difference with the former, is that it computes the correlation between the rank of x and y variables.
+
+```{r echo=FALSE, include=FALSE }
+corr_res = cor.test(df$cart_additions,df$chain_length, method ='spearman')
+cor.test(df$cart_additions,df$chain_length, method ='spearman')
+```
+
+
+Figure 5
+```{r echo=FALSE }
+as_flextable(corr_res)
+```
+This table shows the summary of the results of the Spearman Rank-Order correlation test.
+The p-value is lower than 5% which means we can reject the null hypothesis that the variables do not tend to change together.
+The correlation coefficient is 0.25, therefore there seems to be a positive correlation. Cart additions increase with chain length.
+However, and this is a big however our data is not continuous but discrete and there seems to be many ties.
+As well now the following question arises: Is our dataset including many outliers ?
+
+
+
+
+
+```{r echo=FALSE }
+plot( df$chain_length ~ df$cart_additions,data=df, col="red", xlab="Chain length", ylab="Cart additions", main="Cart additions & Chain length relationship",sub="Figure 6")
+
+```
+Figure 6 shows a scatterplot of both variables. It helps us to visualize its association. However we can see some outliers in the cart additions. I will drop all those cart additions above 30. 
+Less than 100 rows out of +30k will be lost.
+
+```{r echo=FALSE }
+df1 = subset(df, cart_additions <20)
+df2 = subset(df1, chain_length <30)
+```
+
+
+
+```{r echo=FALSE, include=FALSE }
+corr_res2= cor.test(df2$cart_additions,df2$chain_length, method ='spearman', exact= FALSE)
+cor.test(df2$cart_additions,df2$chain_length, method ='spearman', exact= FALSE)
+```
+Figure 7
+```{r echo=FALSE }
+as_flextable(corr_res2)
+```
+This table shows the results of the Spearman Rank Correlation test after outlier removal. The coefficient decrease from 0.25 to o.246, still significant (pvalue < 0.05)
+
+
+```{r echo=FALSE }
+plot( df2$chain_length ~ df2$cart_additions,data=df, col="red", xlab="Chain length", ylab="Cart additions", main="Cart additions & Chain length relationship",sub="Figure 8")
+
+```
+Data after removing outliers.
+
+To solve the aforementioned "tied values" problem, a variation of Kendall correlation coefficient will be used: "Kendall's tau-b coefficient" which is more effective in determining whether non-parametric data samples with ties are correlated.
+
+```{r echo=FALSE, include=FALSE }
+corr_res3 = cor.test(df2$cart_additions,df2$chain_length, method ='kendall', use="pairwise")
+cor.test(df2$cart_additions,df2$chain_length, method ='kendall' , use="pairwise")
+```
+Figure 9
+```{r echo=FALSE }
+as_flextable(corr_res3)
+```
+This table shows the Kendall correalation test results. The coefficient is 0.23, the p.value is lower than 0.00 and the statistic is 43.9
+
+In order to get more detailed information about the relationship of both models let's run a simple linear regression
+```{r echo=FALSE, include=FALSE }
+fit<-lm(cart_additions ~ chain_length, data=df2) 
+```
+
+Figure 10
+```{r echo=FALSE }
+as_flextable(fit)
+```
+The coefficient for the chain_length is 0.19 and significant at the 5% level. 31891 degrees of freedom. The t-statistic is 34.
+
+The interpretation of the coefficient is the following: 1 increase in the length of the chain increases the cart additions by 0.19 with an standard error of 0.06. In other words, the prediction could change by 0.06
+The residuals show the difference between the actual values and the forecasted. The highest absolute residual is 1.76.
+
+Now the most interesting part: The R^2 tells us how the model explains the variance of our data. Only 3.5% of the variance in the cart additions is explained by the channel length. This is a very low figure! Note the Adjusted R-squared is almost identical since we are only using one predictor.
+
+
+```{r echo=FALSE }
+p <-ggplot(df2, aes(x=chain_length, y=cart_additions)) + 
+  geom_point(color='#2980B9', size = 1) + 
+  geom_smooth(method=lm, se=FALSE, fullrange=TRUE, color='#2C3E50')
+p + ggtitle("Cart additions & Chain length relationship   (Figure 11)" )
+```
+Figure 11 plots the regression line of the linear model. It doesn't seem to explain much the data. The difference between the fitted and predicted values is pretty big.
+Again the linear model is not the most appropiate for this analysis. We can justify them with diagnostic plots for linear regression analysis:
+
+
+
+Figure 12
+```{r echo=FALSE }
+plot(fit)
+```
+Looking at the "Residuals vs fitted" plot we can see clearly that the points do not look randomly distributed when scattering the residuals with the predicted values. This implies the model used is not the most appropriate for this dataset.
+The Q-Q plot, which we have analyzed previously including the outliers, is still showing that the data is not normal.
+The scale location plot should look as well random, since it shows us the spread of the residuals along the ranges of predictors, but it is clearly not, there seem to be patterns.
+
+
+Log/sqrt transformations were as well considered but do not change the results of the models. 
+
+```{r echo=FALSE }
+p <-ggplot(df2, aes(x=chain_length, y=log10(cart_additions))) + 
+  geom_point(color='#2980B9', size = 1) + 
+  geom_smooth(method=lm, se=FALSE, fullrange=TRUE, color='#2C3E50')
+p + ggtitle("Cart additions & Chain length relationship   (Figure 11)" )
+```
+
+
+## Results
+
+The objective of this study was to find if there was a relationship between the length of the customer journey (channel length) and the number of cart additions.
+Based on Kendall's rau correlation test, there is a positive correlation between the length of the chain and the number of cart additions a user does. The null hypothesis that there is no association is rejected at a 95% confidence level with a coefficient of 0.23 and a p-value below 0.00.
+
+A linear model is not the best approach to answer the main question of the study since the model does not explain the variation of the dependent variable (cart additions) with a R^2 of 3.5; a very low value. Furthermore, the residuals are very high and they seem to follow patterns other than linear.
+
+
